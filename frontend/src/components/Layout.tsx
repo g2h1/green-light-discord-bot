@@ -1,0 +1,16 @@
+import { Outlet } from 'react-router-dom'
+import { Sidebar } from './Sidebar'
+import { ServerProvider } from '../context/ServerContext'
+
+export function Layout() {
+  return (
+    <ServerProvider>
+      <div className="flex min-h-screen bg-surface-0 text-text-primary">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto p-6">
+          <Outlet />
+        </main>
+      </div>
+    </ServerProvider>
+  )
+}
