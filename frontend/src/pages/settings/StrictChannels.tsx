@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Channel } from '../messages/types'
-import { Button, Field, TextInput, Toggle } from '../messages/components/FormControls'
+import { Button, Field, Toggle } from '../messages/components/FormControls'
 
 interface Role {
   id: string
