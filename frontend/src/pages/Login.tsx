@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
-
+import { API_BASE } from '../lib/api'
 const ERROR_MESSAGES: Record<string, string> = {
   oauth_state: 'Login session expired. Please try again.',
   oauth_failed: 'Discord login failed. Please try again.',
