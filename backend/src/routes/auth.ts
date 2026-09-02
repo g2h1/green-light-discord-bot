@@ -14,8 +14,8 @@ authRouter.get('/discord', (_req, res) => {
 
   res.cookie(STATE_COOKIE, state, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
+     secure: true,
+    sameSite: 'none',
     maxAge: 5 * 60 * 1000,
     path: '/',
   })
