@@ -26,8 +26,12 @@ export const sessionCookie = {
   name: COOKIE_NAME,
   options: {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    // The frontend (Vercel) and backend (alwaysdata) live on different
+    // registrable domains, so this cookie must ride along on cross-site
+    // fetch() calls from the SPA. That requires SameSite=None, which in
+    // turn requires Secure — browsers silently drop None cookies without it.
+    secure: true,
+    sameSite: 'none' as const,
     maxAge: MAX_AGE_MS,
     path: '/',
   },
