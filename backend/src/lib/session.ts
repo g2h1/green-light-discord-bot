@@ -26,8 +26,8 @@ export const sessionCookie = {
   name: COOKIE_NAME,
   options: {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    secure: true,
+    sameSite: 'none' as const,
     maxAge: MAX_AGE_MS,
     path: '/',
   },
