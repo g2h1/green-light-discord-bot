@@ -27,7 +27,7 @@ export function Login() {
         )}
 
         <a
-          href="/api/auth/discord"
+          href={`${API_BASE}/auth/discord`}
           className="block w-full rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-brand-400"
         >
           Continue with Discord
