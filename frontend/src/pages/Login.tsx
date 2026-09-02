@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
+import { API_BASE } from '../lib/api'
 
 const ERROR_MESSAGES: Record<string, string> = {
   oauth_state: 'Login session expired. Please try again.',
@@ -27,7 +28,7 @@ export function Login() {
         )}
 
         <a
-          href="/api/auth/discord"
+          href={`${API_BASE}/auth/discord`}
           className="block w-full rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-brand-400"
         >
           Continue with Discord
