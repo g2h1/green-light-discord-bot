@@ -17,6 +17,17 @@ export const data = new SlashCommandBuilder()
   .setDescription('Server structure management')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addSubcommand((sub) => sub.setName('sync').setDescription('Idempotently create/verify the server category & channel structure'))
+  .addSubcommand((sub) =>
+    sub
+      .setName('rebuild')
+      .setDescription('DELETES every existing channel and category, then builds the structure from scratch')
+      .addStringOption((opt) =>
+        opt
+          .setName('confirm')
+          .setDescription('Type DELETE to confirm — this cannot be undone')
+          .setRequired(true),
+      ),
+  )
 
 type Tier = 'public' | 'pro' | 'staff'
 
@@ -67,8 +78,52 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  await interaction.deferReply({ ephemeral: true })
+  const subcommand = interaction.options.getSubcommand()
 
+  if (subcommand === 'rebuild') {
+    const confirm = interaction.options.getString('confirm', true)
+    if (confirm !== 'DELETE') {
+      await interaction.reply({
+        content: 'Not confirmed. Run `/server rebuild confirm:DELETE` if you really want to wipe every channel and category on this server.',
+        ephemeral: true,
+      })
+      return
+    }
+
+    await interaction.deferReply({ ephemeral: true })
+
+    const allChannels = [...guild.channels.cache.values()]
+    // Delete non-category channels first, then categories, so Discord never
+    // complains about a non-empty category during teardown.
+    const nonCategories = allChannels.filter((c) => c.type !== ChannelType.GuildCategory)
+    const categories = allChannels.filter((c) => c.type === ChannelType.GuildCategory)
+
+    let deleted = 0
+    for (const channel of [...nonCategories, ...categories]) {
+      // Never delete the channel we're replying in until the very end — Discord
+      // would fail the interaction reply if its own channel disappears mid-flight.
+      if (channel.id === interaction.channelId) continue
+      await channel.delete('Server rebuild requested via /server rebuild').catch(() => undefined)
+      deleted++
+    }
+
+    await interaction.editReply(`Deleted ${deleted} channel(s)/categor(y/ies). Building the new structure now…`)
+
+    await runSync(guild, interaction)
+
+    // Clean up the channel the command was run in, if it wasn't part of the new structure.
+    const thisChannel = guild.channels.cache.get(interaction.channelId)
+    if (thisChannel && thisChannel.type !== ChannelType.GuildCategory) {
+      await thisChannel.delete('Server rebuild cleanup').catch(() => undefined)
+    }
+    return
+  }
+
+  await interaction.deferReply({ ephemeral: true })
+  await runSync(guild, interaction)
+}
+
+async function runSync(guild: Guild, interaction: ChatInputCommandInteraction) {
   const staffRoleIds = guild.roles.cache
     .filter((r) => /staff|mod|admin/i.test(r.name) && !r.managed && r.id !== guild.roles.everyone.id)
     .map((r) => r.id)
@@ -140,10 +195,13 @@ function findVoiceChannelId(guild: Guild, name: string): string | undefined {
 
 /** Wires the freshly-synced "SUPPORT VOICE" channels into the support_queue server setting, preserving any other fields already set (staff roles, locale). */
 async function syncSupportQueueConfig(guild: Guild): Promise<boolean> {
-  const waitingChannelId = findVoiceChannelId(guild, 'Support Waiting')
-  const roomChannelIds = [findVoiceChannelId(guild, 'Support Room 1'), findVoiceChannelId(guild, 'Support Room 2')].filter(
-    (id): id is string => Boolean(id),
-  )
+  const waitingChannelId = findVoiceChannelId(guild, 'Waiting Room')
+  const roomChannelIds = [
+    findVoiceChannelId(guild, 'Support 1'),
+    findVoiceChannelId(guild, 'Support 2'),
+    findVoiceChannelId(guild, 'Technical Support'),
+    findVoiceChannelId(guild, 'Private Support'),
+  ].filter((id): id is string => Boolean(id))
 
   if (!waitingChannelId && roomChannelIds.length === 0) return false
 
