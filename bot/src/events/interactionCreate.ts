@@ -4,6 +4,7 @@ import {
   handleTicketClaim,
   handleTicketClose,
   handleTicketDelete,
+  handleTicketLanguage,
   handleTicketOpen,
   handleTicketRate,
   handleTicketReopen,
@@ -26,6 +27,8 @@ async function routeButton(interaction: ButtonInteraction) {
       return handleTicketDelete(interaction)
     case 'ticket_rate':
       return handleTicketRate(interaction, args[0])
+    case 'ticket_lang':
+      return handleTicketLanguage(interaction, args[0], args[1])
     case 'giveaway_enter':
       return handleGiveawayEnter(interaction, args[0])
     default:

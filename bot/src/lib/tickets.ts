@@ -10,6 +10,7 @@ import {
 } from 'discord.js'
 import { supabase } from './supabase.js'
 import { runAutomations } from './automations.js'
+import { t, type Locale } from '../i18n/index.js'
 
 interface PanelConfig {
   buttonText: string
@@ -68,6 +69,15 @@ function actionButtons(status: 'open' | 'claimed' | 'closed', config: PanelConfi
     row.addComponents(new ButtonBuilder().setCustomId('ticket_delete').setLabel('Delete').setStyle(ButtonStyle.Danger))
   }
 
+  return row
+}
+
+function languageButtons(ticketId: string) {
+  const row = new ActionRowBuilder<ButtonBuilder>()
+  row.addComponents(
+    new ButtonBuilder().setCustomId(`ticket_lang:${ticketId}:ar`).setLabel('🇪🇬 العربية').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`ticket_lang:${ticketId}:en`).setLabel('🇺🇸 English').setStyle(ButtonStyle.Secondary),
+  )
   return row
 }
 
@@ -181,6 +191,11 @@ export async function handleTicketOpen(interaction: ButtonInteraction, panelId: 
     ? config.mentionOnOpenRoleIds.map((id) => `<@&${id}>`).join(' ') + ' '
     : ''
 
+  await channel.send({
+    content: `${vars.user} ${t('en', 'ticket.chooseLanguage')}`,
+    components: [languageButtons(ticket.id)],
+  })
+
   if (config.welcomeEnabled) {
     const embed = new EmbedBuilder()
       .setTitle(config.welcomeEmbedTitle ? fillTicketVariables(config.welcomeEmbedTitle, vars) : `${category.label} ticket`)
@@ -248,13 +263,21 @@ async function loadPanelConfig(panelId: string | null): Promise<PanelConfig | nu
   return (data?.config as PanelConfig) ?? null
 }
 
+export async function handleTicketLanguage(interaction: ButtonInteraction, ticketId: string, lang: string) {
+  await interaction.deferReply({ ephemeral: true })
+  const locale: Locale = lang === 'ar' ? 'ar' : 'en'
+
+  await supabase.from('tickets').update({ language: locale }).eq('id', ticketId)
+  await interaction.editReply(t(locale, 'ticket.languageSet'))
+}
+
 export async function handleTicketClaim(interaction: ButtonInteraction) {
   // Deferred immediately for the same reason as handleTicketOpen: the DB/config
   // lookups below can push past Discord's ~3s interaction-ack window.
   await interaction.deferReply()
 
   const ticket = await loadTicketByChannel(interaction.channelId)
-  if (!ticket) return interaction.editReply('This is not a ticket channel.')
+  if (!ticket) return interaction.editReply(t('en', 'ticket.notATicketChannel'))
 
   const config = await loadPanelConfig(ticket.panel_id)
   if (config?.claimPermissionRoleIds.length) {
@@ -272,7 +295,8 @@ export async function handleTicketClaim(interaction: ButtonInteraction) {
     .update({ status: 'claimed', claimed_by_discord_id: interaction.user.id })
     .eq('id', ticket.id)
 
-  await interaction.editReply(`🎫 Claimed by <@${interaction.user.id}>`)
+  const locale = ticket.language === 'ar' ? 'ar' : 'en'
+  await interaction.editReply(t(locale, 'ticket.claimedBy', { staff: `<@${interaction.user.id}>` }))
 }
 
 async function postTranscript(guild: Guild, ticket: { id: string; discord_channel_id: string; category: string }, config: PanelConfig | null) {
@@ -308,7 +332,7 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
   await interaction.deferReply()
 
   const ticket = await loadTicketByChannel(interaction.channelId)
-  if (!ticket) return interaction.editReply('This is not a ticket channel.')
+  if (!ticket) return interaction.editReply(t('en', 'ticket.notATicketChannel'))
 
   const config = await loadPanelConfig(ticket.panel_id)
 
@@ -321,8 +345,9 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
 
   if (interaction.guild) await postTranscript(interaction.guild, ticket, config)
 
+  const closeLocale = ticket.language === 'ar' ? 'ar' : 'en'
   await interaction.editReply({
-    content: 'Ticket closed. Please rate your support experience:',
+    content: t(closeLocale, 'ticket.closedRatePrompt'),
     components: [ratingButtons(), actionButtons('closed', config ?? DEFAULT_CONFIG)],
   })
 
@@ -364,7 +389,7 @@ export async function handleTicketReopen(interaction: ButtonInteraction) {
   await interaction.deferReply()
 
   const ticket = await loadTicketByChannel(interaction.channelId)
-  if (!ticket) return interaction.editReply('This is not a ticket channel.')
+  if (!ticket) return interaction.editReply(t('en', 'ticket.notATicketChannel'))
 
   const channel = interaction.channel
   if (channel && channel.type === ChannelType.GuildText) {
@@ -373,16 +398,20 @@ export async function handleTicketReopen(interaction: ButtonInteraction) {
 
   const config = await loadPanelConfig(ticket.panel_id)
   await supabase.from('tickets').update({ status: 'claimed', closed_at: null }).eq('id', ticket.id)
-  await interaction.editReply({ content: 'Ticket reopened.', components: [actionButtons('claimed', config ?? DEFAULT_CONFIG)] })
+  const reopenLocale = ticket.language === 'ar' ? 'ar' : 'en'
+  await interaction.editReply({
+    content: t(reopenLocale, 'ticket.reopened'),
+    components: [actionButtons('claimed', config ?? DEFAULT_CONFIG)],
+  })
 }
 
 export async function handleTicketDelete(interaction: ButtonInteraction) {
   await interaction.deferReply()
 
   const ticket = await loadTicketByChannel(interaction.channelId)
-  if (!ticket) return interaction.editReply('This is not a ticket channel.')
+  if (!ticket) return interaction.editReply(t('en', 'ticket.notATicketChannel'))
 
-  await interaction.editReply('Deleting this ticket channel…')
+  await interaction.editReply(t(ticket.language === 'ar' ? 'ar' : 'en', 'ticket.deleting'))
   await supabase.from('tickets').delete().eq('id', ticket.id)
   const channel = interaction.channel
   if (channel && 'delete' in channel) await channel.delete().catch(() => undefined)
@@ -392,14 +421,14 @@ export async function handleTicketRate(interaction: ButtonInteraction, stars: st
   await interaction.deferReply({ ephemeral: true })
 
   const ticket = await loadTicketByChannel(interaction.channelId)
-  if (!ticket) return interaction.editReply('This is not a ticket channel.')
+  if (!ticket) return interaction.editReply(t('en', 'ticket.notATicketChannel'))
 
   await supabase.from('ticket_ratings').upsert(
     { ticket_id: ticket.id, stars: Number(stars), rated_by_discord_id: interaction.user.id },
     { onConflict: 'ticket_id' },
   )
 
-  await interaction.editReply(`Thanks for the ${stars}-star rating!`)
+  await interaction.editReply(t(ticket.language === 'ar' ? 'ar' : 'en', 'ticket.ratingThanks', { stars }))
 }
 
 export async function logTicketMessage(channelId: string, authorId: string, authorUsername: string, content: string) {

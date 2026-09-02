@@ -1,0 +1,21 @@
+{
+  "ticket.chooseLanguage": "Please choose your preferred language / يرجى اختيار لغتك المفضلة",
+  "ticket.languageSet": "Language set to English. Support will be with you shortly.",
+  "ticket.welcomeDefaultTitle": "{category} ticket",
+  "ticket.welcomeDefaultDescription": "Welcome {user}. Support will be with you shortly.",
+  "ticket.claimedBy": "🎫 Claimed by {staff}",
+  "ticket.closedRatePrompt": "Ticket closed. Please rate your support experience:",
+  "ticket.ratingThanks": "Thanks for the {stars}-star rating!",
+  "ticket.reopened": "Ticket reopened.",
+  "ticket.deleting": "Deleting this ticket channel…",
+  "ticket.notATicketChannel": "This is not a ticket channel.",
+  "support.joinedQueue": "You've joined the support queue. You are #{position}.",
+  "support.alreadyQueued": "You're already in the support queue (position #{position}).",
+  "support.leftQueue": "You've left the support queue.",
+  "support.claimed": "{staff} claimed your request and is moving you to a support room.",
+  "support.noWaitingUsers": "There is no one waiting in the support queue.",
+  "support.roomFull": "No free support rooms are available right now. Please wait.",
+  "support.sessionClosed": "Your support session has ended. Thanks for reaching out!",
+  "support.notInSession": "This voice channel doesn't have an active support session.",
+  "support.movedToRoom": "You've been moved to {room}."
+}

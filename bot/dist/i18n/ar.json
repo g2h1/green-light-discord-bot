@@ -1,0 +1,21 @@
+{
+    "ticket.chooseLanguage": "Please choose your preferred language / يرجى اختيار لغتك المفضلة",
+    "ticket.languageSet": "تم تعيين اللغة إلى العربية. سيتواصل معك الدعم قريبًا.",
+    "ticket.welcomeDefaultTitle": "تذكرة {category}",
+    "ticket.welcomeDefaultDescription": "مرحبًا {user}. سيتواصل معك الدعم قريبًا.",
+    "ticket.claimedBy": "🎫 تم الاستلام بواسطة {staff}",
+    "ticket.closedRatePrompt": "تم إغلاق التذكرة. يرجى تقييم تجربة الدعم الخاصة بك:",
+    "ticket.ratingThanks": "شكرًا لتقييمك بـ {stars} نجوم!",
+    "ticket.reopened": "تم إعادة فتح التذكرة.",
+    "ticket.deleting": "جارٍ حذف قناة التذكرة…",
+    "ticket.notATicketChannel": "هذه ليست قناة تذكرة.",
+    "support.joinedQueue": "لقد انضممت إلى طابور الدعم. أنت رقم #{position}.",
+    "support.alreadyQueued": "أنت بالفعل في طابور الدعم (المركز #{position}).",
+    "support.leftQueue": "لقد غادرت طابور الدعم.",
+    "support.claimed": "قام {staff} باستلام طلبك وسينقلك إلى غرفة دعم.",
+    "support.noWaitingUsers": "لا يوجد أحد في انتظار الدعم حاليًا.",
+    "support.roomFull": "لا توجد غرف دعم متاحة حاليًا. يرجى الانتظار.",
+    "support.sessionClosed": "انتهت جلسة الدعم الخاصة بك. شكرًا لتواصلك معنا!",
+    "support.notInSession": "لا توجد جلسة دعم نشطة في هذه القناة الصوتية.",
+    "support.movedToRoom": "تم نقلك إلى {room}."
+}

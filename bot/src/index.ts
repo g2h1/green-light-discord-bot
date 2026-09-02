@@ -5,6 +5,7 @@ import { registerInteractionCreate } from './events/interactionCreate.js'
 import { registerMessageCreate } from './events/messageCreate.js'
 import { registerGuildLogging } from './events/guildLogging.js'
 import { registerWelcome } from './events/welcome.js'
+import { registerVoiceStateUpdate } from './events/voiceStateUpdate.js'
 
 // Last-resort net: every event handler already catches its own errors, but a
 // single unforeseen unhandled rejection anywhere used to crash the whole bot
@@ -22,6 +23,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildVoiceStates,
   ],
   partials: [Partials.Message, Partials.Channel, Partials.GuildMember],
 })
@@ -31,5 +33,6 @@ registerInteractionCreate(client)
 registerMessageCreate(client)
 registerGuildLogging(client)
 registerWelcome(client)
+registerVoiceStateUpdate(client)
 
 client.login(env.DISCORD_BOT_TOKEN)
