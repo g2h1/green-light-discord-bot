@@ -25,6 +25,15 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 export function createApp() {
   const app = express()
 
+  // The frontend now proxies all /api/* requests server-to-server through a
+  // Vercel serverless function (see frontend/api/proxy.js) rather than the
+  // browser hitting alwaysdata directly, so every request Express sees
+  // arrives from Vercel's own outbound IP unless we trust the
+  // X-Forwarded-For header Vercel sets on the way in. Without this, the
+  // rate limiter below keys on that single shared IP and lumps every
+  // visitor into one bucket, causing spurious 429s under normal traffic.
+  app.set('trust proxy', true)
+
   const allowedOrigins = new Set(
     [env.FRONTEND_URL, ...(env.ALLOWED_ORIGINS?.split(',') ?? [])].map((o) => o.trim()).filter(Boolean),
   )
