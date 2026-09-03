@@ -20,13 +20,33 @@ declare global {
 const CACHE_TTL_MS = 15_000
 const guildListCache = new Map<string, { guilds: DiscordGuild[]; expiresAt: number }>()
 
+// The TTL cache above only helps once a value exists. On a cold cache — the
+// common case, since a dashboard page load fires its first burst of
+// requireServerAccess-gated requests all at once — every one of those
+// requests would see a cache miss and independently call fetchUserGuilds,
+// so the burst hit Discord's rate limit anyway. Sharing the in-flight
+// promise across concurrent callers for the same token means Discord only
+// ever sees one request per cold burst, not five.
+const inFlightRequests = new Map<string, Promise<DiscordGuild[]>>()
+
 async function getCachedUserGuilds(accessToken: string): Promise<DiscordGuild[]> {
   const cached = guildListCache.get(accessToken)
   if (cached && cached.expiresAt > Date.now()) return cached.guilds
 
-  const guilds = await fetchUserGuilds(accessToken)
-  guildListCache.set(accessToken, { guilds, expiresAt: Date.now() + CACHE_TTL_MS })
-  return guilds
+  const inFlight = inFlightRequests.get(accessToken)
+  if (inFlight) return inFlight
+
+  const request = fetchUserGuilds(accessToken)
+    .then((guilds) => {
+      guildListCache.set(accessToken, { guilds, expiresAt: Date.now() + CACHE_TTL_MS })
+      return guilds
+    })
+    .finally(() => {
+      inFlightRequests.delete(accessToken)
+    })
+
+  inFlightRequests.set(accessToken, request)
+  return request
 }
 
 /**
